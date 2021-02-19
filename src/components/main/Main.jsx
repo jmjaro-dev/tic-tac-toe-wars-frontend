@@ -11,24 +11,22 @@ const Main = () => {
     name: '',
     room: '',
     roomCreated: false,
-    gameCreate: false,
-    loading: false
+    gameCreate: false
   };
   const [socket, setSocket] = useState(null);
   const [session, setSession] = useState(initialState);
   const ENDPOINT = 'http://localhost:5000/';
 
-  // Initialize Socket Connection to server 
   useEffect(() => {
     if(socket === null) {
+      // Initialize Socket Connection to server 
       setSocket(socketIOClient(ENDPOINT));
     } else {
-      // 
-      if(session.gameCreate && !session.roomCreated) {
-        socket.on("roomCreated", room => {
-          console.log(`Room created: ${room} `);
-          setSession({ ...session, roomCreated: true, room });
-        })
+      if(session.gameCreate) {
+        // Listen for 'roomCreated' event from server
+        socket.on("roomCreated", ({ id }) => {
+          setSession({ ...session, room: id, roomCreated: true });
+        });
       }
     }
   }, [socket, session]); 
@@ -53,20 +51,20 @@ const Main = () => {
     e.preventDefault();
     
     if(session.choice === 1) {
-      socket.emit("createGame");
-      console.log("Requesting for Room");
       setSession({ ...session, gameCreate: true });
+      socket.emit("createGame", session.name);
     } else {
       socket.emit("joinGame", { room: session.room });
     }
   }
 
-  // Render Components depending on session.choice value
-  if(session.roomCreated === true) {
+  // Check if room is already Created by server
+  if(session.roomCreated) {
     return (
       <Redirect to={`/game?room=${session.room}&name=${session.name}`} />
     )
   } else {
+    // Render Components depending on session.choice value
     if(session.choice !== 0) {
       return (
         <Form 
