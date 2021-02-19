@@ -1,7 +1,28 @@
 import { useState } from 'react';
 import Box from '../box/Box';
 
-const Board = ({ determineWinner }) => {
+// Determines the winner of the game
+const determineWinner = (boxes) => {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (boxes[a] && boxes[a] === boxes[b] && boxes[a] === boxes[c]) {
+      return boxes[a];
+    }
+  }
+  return null;
+}
+
+const Board = () => {
   const initialState = {
     boxes: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
     isPlayerOnesTurn: true,
@@ -69,37 +90,39 @@ const Board = ({ determineWinner }) => {
   } 
   
   return (
-    <>
-      <div className="status">{status}</div>
-      <div className="board-row">
-        {renderBox(1)}
-        {renderBox(2)}
-        {renderBox(3)}
+    <div className="game">
+      <div className="game-board">
+        <div className="status">{status}</div>
+        <div className="board-row">
+          {renderBox(1)}
+          {renderBox(2)}
+          {renderBox(3)}
+        </div>
+        <div className="board-row">
+          {renderBox(4)}
+          {renderBox(5)}
+          {renderBox(6)}
+        </div>
+        <div className="board-row">
+          {renderBox(7)}
+          {renderBox(8)}
+          {renderBox(9)}
+        </div>
+        <>
+          {boardState.movesLeft > 0 && winner === null ? (
+            <form onSubmit={onSubmit} className="user-move">
+              <div>
+                <label htmlFor="userMove">Select Cell Number: [1- 9]</label>
+                <input type="text" name="userMove" value={userMove} onChange={onChageHandler} maxLength="1" />
+              </div>
+              <button className="btn-submit" type="submit" disabled={userMove === "" || userMove === "0"}>Confirm</button>
+            </form>
+          ) : (
+            <button className="btn-reset" onClick={onReset}>Play Again</button>
+          )}
+        </>
       </div>
-      <div className="board-row">
-        {renderBox(4)}
-        {renderBox(5)}
-        {renderBox(6)}
-      </div>
-      <div className="board-row">
-        {renderBox(7)}
-        {renderBox(8)}
-        {renderBox(9)}
-      </div>
-      <>
-        {boardState.movesLeft > 0 && winner === null ? (
-          <form onSubmit={onSubmit} className="user-move">
-            <div>
-              <label htmlFor="userMove">Select Cell Number: [1- 9]</label>
-              <input type="text" name="userMove" value={userMove} onChange={onChageHandler} maxLength="1" />
-            </div>
-            <button className="btn-submit" type="submit" disabled={userMove === "" || userMove === "0"}>Confirm</button>
-          </form>
-        ) : (
-          <button className="btn-reset" onClick={onReset}>Play Again</button>
-        )}
-      </>
-    </>
+    </div>
   )
 }
 

@@ -1,3 +1,10 @@
+@mixin btn {
+  padding: 5px 10px;
+  width: max-content;
+  margin-top: 20px; 
+}
+
+@import './scss/Menu';
 @import './scss/Board';
 @import './scss/Box';
 
@@ -17,10 +24,4 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.game {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
