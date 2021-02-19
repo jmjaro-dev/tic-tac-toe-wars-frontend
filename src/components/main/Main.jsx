@@ -5,14 +5,14 @@ import Menu from '../menu/Menu';
 import Form from '../form/Form';
 
 const Main = () => {
-  const [socket, setSocket] = useState(null);
-  const [session, setSession] = useState({
-    choice: null,
+  const initialState = {
+    choice: 0,
     name: '',
     room: '',
-    loading: false,
-    isNewGame: false
-  });
+    loading: false
+  };
+  const [socket, setSocket] = useState(null);
+  const [session, setSession] = useState(initialState);
   const ENDPOINT = 'http://localhost:5000/';
 
   // Initialize Socket Connection to server 
@@ -26,14 +26,35 @@ const Main = () => {
     }
   }, [socket]); 
 
+  // Updates the values of 'session' state
+  const onChange = e => {
+    const field = e.target.name;
+    setSession({ ...session, [field]: e.target.value });
+  }
+
+  const goBack = _ => {
+    setSession(initialState)
+  }
+
+  // Sets 'session.choice' state to either 1 (new game) or 2 (join game)
+  const onGameSelect = choice => {
+    setSession({ ...session, choice }); 
+  }
+
   // Render Components depending on session.choice value
-  if(session.choice !== null) {
+  if(session.choice !== 0) {
     return (
-      <Form />
+      <Form 
+        choice={session.choice} 
+        name={session.name} 
+        room={session.room} 
+        onChange={onChange} 
+        goBack={goBack}
+      />
     );
   } else {
     return (
-      <Menu />
+      <Menu onGameSelect={onGameSelect} />
     );
   }  
 }

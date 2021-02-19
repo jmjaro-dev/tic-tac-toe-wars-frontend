@@ -1,0 +1,29 @@
+.game-form {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; 
+
+  input {
+    @include inputBox;
+  }
+
+  .input-room {
+    margin-top: 20px;
+  }
+  
+  .btn-container {
+    display: flex;
+    justify-content: space-between;
+
+    button {
+      @include btn;
+    }
+    
+    .btn-back {
+      margin-right: 20px;
+    }
+  }
+}

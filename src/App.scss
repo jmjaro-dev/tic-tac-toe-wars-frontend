@@ -1,3 +1,9 @@
+@mixin inputBox {
+  height: 50px;
+  width: 300px;
+  text-align: center; 
+}
+
 @mixin btn {
   padding: 5px 10px;
   width: max-content;
@@ -5,6 +11,7 @@
 }
 
 @import './scss/Menu';
+@import './scss/Form';
 @import './scss/Board';
 @import './scss/Box';
 
