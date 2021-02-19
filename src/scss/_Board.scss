@@ -1,0 +1,48 @@
+.game-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  .status {
+    margin-bottom: 10px;
+  }
+
+  .board-row:after {
+    clear: both;
+    content: "";
+    display: table;
+  }
+  
+  @mixin btn {
+    padding: 5px 10px;
+    width: max-content;
+    margin-top: 20px; 
+  }
+  
+  .user-move {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+
+    label {
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    input {
+      height: 30px;
+      width: 30px;
+      text-align: center;
+    }
+    
+    .btn-submit {
+      @include btn;
+    }
+  }
+
+  .btn-reset {
+    @include btn;
+  }
+}

@@ -1,7 +1,7 @@
-const Box = () => {
+const Box = ({ value }) => {
   return (
-    <div>
-      
+    <div className={value === "X" || value === "O" ? "box" : "box label"}>
+      {value}
     </div>
   )
 }
