@@ -1,4 +1,5 @@
 import { useState } from 'react';
+// Box Component
 import Box from '../box/Box';
 
 // Determines the winner of the game
