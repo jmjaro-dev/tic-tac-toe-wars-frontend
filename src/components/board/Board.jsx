@@ -1,153 +1,217 @@
 import { useState, useEffect } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import socketIOClient from 'socket.io-client';
 import qs from 'qs';
-// Box Component
+// Components
 import Box from '../box/Box';
+import Wait from '../wait/Wait';
+import Rematch from '../rematch/Rematch';
 
-// Determines the winner of the game
-const determineWinner = (boxes) => {
-  const winningConditions = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (let i = 0; i < winningConditions.length; i++) {
-    const [a, b, c] = winningConditions[i];
-    if (boxes[a] && boxes[a] === boxes[b] && boxes[a] === boxes[c]) {
-      return boxes[a];
-    }
-  }
-  return null;
-}
-
-const Board = () => {
-  const initialState = {
-    boxes: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    isPlayerOnesTurn: true,
-    movesLeft: 9
-  }
-  const [socket, setSocket] = useState(null);
-  const [socketID, setSocketID] = useState(null);
-  // Game Room State
-  const [gameRoom, setGameRoom] = useState({
-    room: null,
-    token: 'X',
-    opponent: {},
+const Board = ({ socket }) => {
+  // Game Room Initial State
+  const gameInitialState = {
+    socketID: "",
+    board: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    turn: true,
+    movesLeft: 9,
+    room: "",
+    token: "",
+    name: "",
+    opponent: [],
+    playerMove: "",
+    winner: null,
+    msg: "",
+    rematchMsg: "",
     waiting: false,
-    joinError: false
-  });
-  // Board State
-  const [boardState, setBoardState] = useState(initialState);
-  const [userMove, setUserMove] = useState("");
-  const ENDPOINT = 'http://localhost:5000/';
+    joinError: false,
+    isStarted: false,
+    tokensAssigned: false,
+    isGameOver: false,
+    rematchRequest: false,
+    requestSent: false,
+    responseSent: false,
+    rematchResponse: null
+  };
+  // Game Room State
+  const [gameState, setGameState] = useState(gameInitialState);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
-    if(socket === null) {
-      // Initialize Socket Connection to server 
-      setSocket(socketIOClient(ENDPOINT));
-    } else {
-      // Listen for joinError Event and set 'joinError' to true to redirect
-      socket.on("joinError", onJoinError);
+    // Runs when component unmounts
+    return () => {
 
-      if(gameRoom.room === null && !gameRoom.joinError) {
+      if(socket !== "" && isLeaving) {
+        // Listen to players leaving the room
+        socket.emit("roomLeave", gameState.room);
+      }
+    }
+  }, [])
+  
+  useEffect(() => {
+    if(socket !== "") {
+      // Set socket ID if empty
+      if(gameState.socketID === "") {
+        // Set socket ID state
+        setGameState({ ...gameState, socketID: socket.id });
+      }
+
+      if(gameState.room === "" && gameState.joinError === false && gameState.tokensAssigned === false && gameState.isStarted === false) {
         // Get room and name information from the url
         const {room, name} = qs.parse(window.location.search, {
           ignoreQueryPrefix: true
         });
         // Set room id
-        setGameRoom({ ...gameRoom, room });
+        setGameState({ ...gameState, room, name });
         // Emit 'newRoomJoin'
         socket.emit("newRoomJoin", { room, name });
-      } 
+        // Listen for joinError Event and set 'joinError' to true to redirect
+        socket.on("joinError", onJoinError);
+      }
 
-      if(gameRoom.room !== null) {
-        // Set waiting state to true when not enough players in room
-        socket.on("waiting", () => setGameRoom({ ...gameRoom, waiting: true }));
+      if(gameState.room !== "" && !gameState.joinError && gameState.tokensAssigned === false && gameState.isStarted === false) {
+        socket.on("waiting", () => setGameState({ ...gameState, waiting: true, opponent: [] }))
+        socket.on("tokenAssignment", ({ token }) => { 
+          setGameState({ ...gameState, token, tokensAssigned: true, waiting: false })
+        });
+      }
 
-        // If there are enough players then set waiting state to false by listening to 'starting' event
-        socket.on("starting", () => setGameRoom({ ...gameRoom, waiting: false })); 
+      if(gameState.room !== "" && !gameState.joinError && gameState.tokensAssigned === true && !gameState.isStarted) {
+        socket.on("starting", ({ boardState, turn, players }) => {
+          // Get Opponent Info
+          const opponent = players.filter(player => player.id !== socket.id);
+          // Get Turn Info
+          const playerTurn = gameState.token === turn ? true : false;
+          const msg = playerTurn ? "Your turn" : `${opponent[0].name}'s turn`;
+
+          setGameState({ ...gameState, board: boardState, turn: playerTurn, opponent, msg, isStarted: true, waiting: false });
+
+        });
+      }
+
+      if(gameState.room !== "" && !gameState.joinError && gameState.tokensAssigned === true && gameState.isStarted === true && gameState.winner === null && gameState.isGameOver === false) {
+        // Listen for "updateBoard" event
+        socket.on("updateBoard", ({ boardState, turn, movesLeft }) => {
+          // Get Turn Info
+          const playerTurn = gameState.token === turn ? true : false;
+          // Update msg
+          const msg = playerTurn ? "Your turn" : `${gameState.opponent[0].name}'s turn`;
+          setGameState({ ...gameState, board: boardState, turn: playerTurn, msg, movesLeft });
+        });
+
+        // Listen for "winner" event to know if a winner is already determined
+        socket.on("winner", ({ boardState, winner }) => {
+          // Set Winner
+          const playerWon = winner === gameState.token ? true : false;
+          // Update msg
+          const msg = playerWon ? "You won!" : "You lose :(";
+          setGameState({ ...gameState, board: boardState, winner: playerWon, msg, isGameOver: true });
+        });
+
+        // Listen for "draw" event
+        socket.on("draw", ({ boardState, movesLeft }) => {
+          const msg = "It's a draw!";
+          setGameState({ ...gameState, board: boardState, movesLeft, msg, isGameOver: true });
+        })
+      }
+
+      // TODO: Listen for Rematch Request from Opponent
+      if(gameState.room !== "" && !gameState.joinError && gameState.tokensAssigned === true && gameState.isStarted === true && gameState.winner !== null && gameState.isGameOver === true) {
+        // Listen for "rematchRequestFromOpponent" event
+        socket.on("rematchRequestFromOpponent", (name) => {
+          const rematchMsg = `${name} requested a rematch.`
+          setGameState({ ...gameState, rematchMsg, rematchRequest: true });
+        });
+        
+        // TODO: Listen for "restartGame" event
+        socket.on("restartGame", ({ boardState, turn }) => {
+          // Get Turn Info
+          const playerTurn = gameState.token === turn ? true : false;
+          const msg = playerTurn ? "Your turn" : `${gameState.opponent[0].name}'s turn`;
+
+          setGameState({ ...gameState, board: boardState, turn: playerTurn, winner: null, msg, waiting: false, isStarted: true, rematchMsg: "", rematchRequest: false, rematchSent: false, rematchResponse: null, isGameOver: false });
+        });
+      }
+
+      // Listen for Rematch Response 
+      if(gameState.room !== "" && !gameState.joinError && gameState.tokensAssigned === true && gameState.isStarted === true && gameState.winner !== null && gameState.isGameOver === true && gameState.requestSent === true) {
+        // Listen for "rematchRequestDeclined" event
+        socket.on("rematchRequestDeclined", (name) => {
+          const rematchMsg = `${name} declined your rematch request.`;
+          const rematchResponse = "declined";
+          setGameState({ ...gameState, rematchMsg, rematchResponse });
+        });
+
+        // Listen for "rematchConfirmed" event
+        socket.on("rematchConfirmed", (name) => {
+          const rematchMsg = `${name} declined your rematch request.`;
+          const rematchResponse = "confirmed";
+          setGameState({ ...gameState, rematchMsg, rematchResponse });
+        });
       }
     }
-  }, [socket, gameRoom, boardState]); 
-
-  // local variables
-  let status;
-  const winner = determineWinner(boardState.boxes);
-
-  // Updates the status
-  if (winner) {
-    status = `Player ${winner === 'X' ? '1' : '2'} wins!`;
-  } else {
-    if(boardState.movesLeft === 0) {
-      status = "It's a draw!";
-    } else {
-      status = `Player ${boardState.isPlayerOnesTurn ? "1's [X]" : "2's [O]"} turn.`;
-    }
-  }
+  }, [socket, gameState.socketID, gameState.room, gameState.joinError, gameState.tokensAssigned, gameState.isStarted, gameState.waiting, gameState.token, gameState.opponent, gameState.winner, gameState.isGameOver, gameState.rematchMsg, gameState.rematchRequest, gameState.requestSent, gameState.rematchSent, gameState.rematchResponse ]); 
 
   const onJoinError = _ => {
-    setGameRoom({ ...gameRoom, joinError: true });
+    setGameState({ ...gameState, joinError: true });
   }
 
   const onChageHandler = e => {
     const input = e.target.value;
-    setUserMove(input);
+    setGameState({ ...gameState, playerMove: input });
+  }
+
+  // Decline Rematch Request
+  const onDecline = _ => {
+    const room = gameState.room;
+    const name = gameState.name;
+
+    socket.emit("rematchDecline", { room, name });
+    setGameState({ ...gameState, responseSent: true, rematchResponse: "declined" })
+  }
+
+  // Confirm Rematch Request
+  const onConfirm = _ => {
+    const room = gameState.room;
+    socket.emit("rematchConfirm", room);
   }
 
   const onSubmit = e => {
     e.preventDefault();
-    const idx = Number(userMove) - 1;
+    const idx = Number(gameState.playerMove) - 1;
+    const room = gameState.room;
+    const token = gameState.token;
 
-    const boxes = boardState.boxes.slice();
-  
-    if (determineWinner(boxes) || (boxes[idx] === 'X' || boxes[idx] === 'O')) {
-      return;
-    }
-    if(boardState.movesLeft > 0) {
-      boxes[idx] = boardState.isPlayerOnesTurn ? 'X' : 'O';
-      setBoardState({
-        boxes,
-        isPlayerOnesTurn: !boardState.isPlayerOnesTurn,
-        movesLeft: boardState.movesLeft-1
-      });
-      setUserMove("");
-    }
+    socket.emit("playerMove", { room, token, idx });
   }
 
-  // Resets the game
-  const onReset = _ => {
-    setBoardState(initialState);
-    setUserMove("");
+  // Request a Rematch
+  const onGameRematch = _ => {
+    const room = gameState.room;
+    const name = gameState.name;
+
+    setGameState({ ...gameState, requestSent: true });
+    socket.emit("rematchRequest", { room, name });
   }
 
   // Renders a Box
   const renderBox = position => {
     const idx = position - 1;
-
     return (
       <Box
-        value={boardState.boxes[idx]}
+        value={gameState.board[idx]}
       />
     );
   } 
   
-  if(gameRoom.joinError) {
+  if(gameState.joinError) {
     return (
       <Redirect to="/" />
     )
   } else {
-    if(!gameRoom.waiting) {
+    if(!gameState.waiting && gameState.isStarted ) {
       return (
         <div className="game">
-          <Link to="/">Back</Link>
           <div className="game-board">
-            <div className="status">{status}</div>
+            <div className="status">{gameState.msg}</div>
             <div className="board-row">
               {renderBox(1)}
               {renderBox(2)}
@@ -164,16 +228,26 @@ const Board = () => {
               {renderBox(9)}
             </div>
             <>
-              {boardState.movesLeft > 0 && winner === null ? (
-                <form onSubmit={onSubmit} className="user-move">
-                  <div>
-                    <label htmlFor="userMove">Select Cell Number: [1- 9]</label>
-                    <input type="text" name="userMove" value={userMove} onChange={onChageHandler} maxLength="1" />
-                  </div>
-                  <button className="btn-submit" type="submit" disabled={userMove === "" || userMove === "0"}>Confirm</button>
-                </form>
+              {!gameState.isGameOver ? (
+                <>
+                  {gameState.turn && gameState.winner === null && 
+                    <form onSubmit={onSubmit} className="user-move">
+                      <div>
+                        <label htmlFor="playerMove">Select Cell Number: [1- 9]</label>
+                        <input type="text" name="playerMove" value={gameState.playerMove} onChange={onChageHandler} maxLength="1" />
+                      </div>
+                      <button className="btn-submit" type="submit" disabled={gameState.playerMove === "" || gameState.playerMove === "0"}>Confirm</button>
+                    </form>
+                  } 
+                </>
               ) : (
-                <button className="btn-reset" onClick={onReset}>Play Again</button>
+                <>
+                  {(gameState.rematchRequest === true || gameState.requestSent) ? (
+                    <Rematch msg={gameState.rematchMsg} sender={gameState.requestSent ? true : false} response={gameState.rematchResponse} onDecline={onDecline} onConfirm={onConfirm} /> 
+                  ) : (
+                    <button className="btn-reset" onClick={onGameRematch}>Request Rematch</button>
+                  )}
+                </>
               )}
             </>
           </div>
@@ -181,7 +255,7 @@ const Board = () => {
       )
     } else {
       return (
-        <h1>waiting for other player to join</h1>
+        <Wait room={gameState.room} />
       );
     }
   }

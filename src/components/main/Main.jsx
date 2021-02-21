@@ -1,40 +1,38 @@
 import { useState, useEffect } from 'react';
-import socketIOClient from 'socket.io-client';
 import { Redirect } from 'react-router-dom';
 // Component
 import Menu from '../menu/Menu';
 import Form from '../form/Form';
 
-const Main = () => {
+const Main = ({ socket }) => {
   const initialState = {
     choice: 0,
-    name: '',
+    userName: '',
     room: '',
     roomCreated: false,
-    gameCreate: false
+    gameCreate: false,
+    joinConfirmed: false
   };
-  const [socket, setSocket] = useState(null);
-  const [session, setSession] = useState(initialState);
-  const ENDPOINT = 'http://localhost:5000/';
 
+  const [session, setSession] = useState(initialState);
+  
   useEffect(() => {
-    if(socket === null) {
-      // Initialize Socket Connection to server 
-      setSocket(socketIOClient(ENDPOINT));
-    } else {
-      if(session.gameCreate) {
-        // Listen for 'roomCreated' event from server
-        socket.on("roomCreated", ({ id }) => {
-          setSession({ ...session, room: id, roomCreated: true });
-        });
-      }
+    if(socket !== "" && session.gameCreate) {
+      socket.on("roomCreated", ({ room, name }) => {
+        setSession({ ...session, room, userName: name, roomCreated: true });
+      });
+    }
+
+    if(socket !== "" && !session.joinConfirmed) {
+      socket.on("joinConfirmed", ({ room, name }) => {
+        setSession({ ...session, room, userName: name, joinConfirmed: true });
+      });
     }
   }, [socket, session]); 
 
   // Updates the values of 'session' state
   const onChange = e => {
-    const field = e.target.name;
-    setSession({ ...session, [field]: e.target.value });
+    setSession({ ...session, [e.target.name]: e.target.value });
   }
 
   // Resets the state
@@ -52,16 +50,16 @@ const Main = () => {
     
     if(session.choice === 1) {
       setSession({ ...session, gameCreate: true });
-      socket.emit("createGame", session.name);
+      socket.emit("createGame", session.userName);
     } else {
-      socket.emit("joinGame", { room: session.room });
+      socket.emit("joinGame", { room: session.room, name: session.userName });
     }
   }
 
   // Check if room is already Created by server
-  if(session.roomCreated) {
+  if(session.roomCreated || session.joinConfirmed) {
     return (
-      <Redirect to={`/game?room=${session.room}&name=${session.name}`} />
+      <Redirect to={`/game?room=${session.room}&name=${session.userName}`} />
     )
   } else {
     // Render Components depending on session.choice value

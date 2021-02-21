@@ -1,0 +1,21 @@
+.wait-info {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+
+  label {
+    margin: 20px auto;
+  }
+
+  input {
+    @include inputBox;
+  }
+
+  button {
+    @include btn;
+    margin-bottom: 20px;
+  }
+}

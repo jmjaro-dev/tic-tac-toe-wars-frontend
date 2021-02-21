@@ -1,17 +1,29 @@
 import './App.scss';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import io from 'socket.io-client';
 // Components
 import Main from './components/main/Main';
 import Board from './components/board/Board';
 
-function App() {
+const App = () => {
+  const serverUrl = 'http://localhost:5000/';
+  const [socket, setSocket] = useState("");
+
+  useEffect(() => {
+    setSocket(io(serverUrl));
+  }, [])
 
   return (
     <div className="App">
       <Router>
         <Switch>
-          <Route exact path='/' component={Main} />
-          <Route path='/game' component={Board} />
+          <Route exact path='/'>
+            <Main socket={socket} />
+          </Route>
+          <Route path='/game'>
+            <Board socket={socket} />
+          </Route>
         </Switch>
       </Router>
     </div>
