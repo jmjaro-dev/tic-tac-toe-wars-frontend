@@ -1,0 +1,21 @@
+.alert {
+  text-align: center;
+  padding: 0.7rem;
+  width: 100%;
+  margin: 0.2rem 0;
+  font-size: 0.8rem;
+  font-weight: bold;
+  opacity: 0.9;
+
+  &.alert-primary {
+    color: #000;
+  }
+  
+  &.alert-danger {
+    color: crimson;
+  }
+  
+  &.alert-success {
+    color: var(--success-color);
+  }
+}

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const Wait = ({ room }) => {
+const Wait = ({ room, onLeave }) => {
 
   // Copies the Room id when user clicks on Textbox
   const onFocus = e => {
@@ -28,7 +28,7 @@ const Wait = ({ room }) => {
       <label htmlFor="roomID">Give this Room ID to your friend for them to join</label>
       <input type="text" name="roomID" id="room-invite-id" value={room} onFocus={onFocus} readOnly />
       <button onClick={onClick}>Copy</button>
-      <Link to="/"> Exit Room</Link>
+      <Link to="/" onClick={onLeave}> Exit Room</Link>
     </div>
   )
 }

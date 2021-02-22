@@ -1,3 +1,8 @@
+:root {
+  --primary-color: #1e88e5;
+--success-color: #28a745;
+}
+
 @mixin inputBox {
   height: 50px;
   width: 300px;
@@ -10,11 +15,17 @@
   margin-top: 20px; 
 }
 
+@import './scss/Navbar';
 @import './scss/Menu';
+@import './scss/AuthForms';
 @import './scss/Form';
 @import './scss/Wait';
 @import './scss/Board';
 @import './scss/Box';
+@import './scss/Rematch';
+@import './scss/GameScore';
+@import './scss/Leaderboard';
+@import './scss/Alerts';
 
 * {
   margin: 0;

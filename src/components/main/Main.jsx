@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+
 // Component
 import Menu from '../menu/Menu';
 import Form from '../form/Form';
 
-const Main = ({ socket }) => {
+const Main = ({ user, socket }) => {
   const initialState = {
-    choice: 0,
-    userName: '',
+    choice: null,
     room: '',
     roomCreated: false,
     gameCreate: false,
@@ -15,24 +17,45 @@ const Main = ({ socket }) => {
   };
 
   const [session, setSession] = useState(initialState);
-  
+  const [isMounted, setIsMounted] = useState(true);
+
   useEffect(() => {
-    if(socket !== "" && session.gameCreate) {
-      socket.on("roomCreated", ({ room, name }) => {
-        setSession({ ...session, room, userName: name, roomCreated: true });
+    setIsMounted(true);
+
+    if(socket && session.gameCreate && isMounted) {
+      socket.on("roomCreated", (room) => {
+        onRoomCreated(room);
       });
     }
 
-    if(socket !== "" && !session.joinConfirmed) {
-      socket.on("joinConfirmed", ({ room, name }) => {
-        setSession({ ...session, room, userName: name, joinConfirmed: true });
+    if(socket && !session.joinConfirmed && isMounted) {
+      socket.on("joinConfirmed", (room) => {
+        onJoinConfirmed(room);
       });
+    }
+
+    return () => {
+      socket.offAny();
+      setIsMounted(false)
+      if(session.choice === "create") {
+        setSession(initialState);
+      }
     }
   }, [socket, session]); 
 
-  // Updates the values of 'session' state
+  // When room is Created
+  const onRoomCreated = (room) => {
+    setSession({ ...session, room, roomCreated: true });
+  }
+
+  // On Join Confirmed
+  const onJoinConfirmed = (room) => {
+    if(isMounted) setSession({ ...session, room, joinConfirmed: true });
+  }
+
+  // Updates the value of 'room' state
   const onChange = e => {
-    setSession({ ...session, [e.target.name]: e.target.value });
+    setSession({ ...session, room: e.target.value });
   }
 
   // Resets the state
@@ -43,27 +66,28 @@ const Main = ({ socket }) => {
   // Sets 'session.choice' state to either 1 (new game) or 2 (join game)
   const onGameSelect = choice => {
     setSession({ ...session, choice }); 
+    
+    if(choice === 'create') {
+      setSession({ ...session, gameCreate: true });
+      socket.emit("createGame", user.username);
+    }
   }
 
   const onSubmit = e => {
     e.preventDefault();
-    
-    if(session.choice === 1) {
-      setSession({ ...session, gameCreate: true });
-      socket.emit("createGame", session.userName);
-    } else {
-      socket.emit("joinGame", { room: session.room, name: session.userName });
-    }
+    const room = session.room;
+    setSession({ ...session, gameCreate: false })
+    socket.emit("joinGame", room);
   }
 
   // Check if room is already Created by server
   if(session.roomCreated || session.joinConfirmed) {
     return (
-      <Redirect to={`/game?room=${session.room}&name=${session.userName}`} />
+      <Redirect to={`/game/${session.room}`} />
     )
   } else {
     // Render Components depending on session.choice value
-    if(session.choice !== 0) {
+    if(session.choice === 'join') {
       return (
         <Form 
           choice={session.choice} 
@@ -82,4 +106,14 @@ const Main = ({ socket }) => {
   }  
 }
 
-export default Main;
+Main.propTypes = {
+  user: PropTypes.object.isRequired,
+  socket: PropTypes.object.isRequired 
+}
+
+const mapStateToProps = state => ({
+  user: state.auth.user,
+  socket: state.auth.socket
+});
+
+export default connect(mapStateToProps, { })(Main);

@@ -1,0 +1,33 @@
+.auth-form-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  h3 {
+    margin-bottom: 20px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; 
+
+    input {
+      @include inputBox;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 0.8rem;
+    }
+
+    button {
+      @include btn;
+    }
+    
+  }
+}
