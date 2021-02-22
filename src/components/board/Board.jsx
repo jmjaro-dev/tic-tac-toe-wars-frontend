@@ -97,15 +97,13 @@ const Board = ({
           const playerTurn = token === firstTurn ? true : false;
           const message = playerTurn ? `Your turn - ${token}` : `${yourOpponent.name}'s turn`;
           const gameData = { board: boardState, turn: playerTurn, opponent: yourOpponent, msg: message };
-          onGameStart(gameData);
-          socket.offAny();
+          setTimeout(() => onGameStart(gameData), 2000);
         });
       }
 
       if(room !== "" && !joinError && tokensAssigned && isStarted && winner === null && !isGameOver) {
         // Listen for "updateBoard" event
         socket.on("updateBoard", ({ boardState, nextTurn, movesLeft }) => {
-          socket.offAny();
           // Get Turn Info
           const playerTurn = token === nextTurn ? true : false;
           // Update msg
@@ -120,7 +118,6 @@ const Board = ({
           // Set Winner
           const playerWon = playerWhoWon === token ? true : false;
           const message = playerWon ? "You won! :O" : "You lose :(";
-          socket.offAny();
           if(playerWon) {
             // Update msg and increment currentScore
             const userData = { id: user._id, username: user.username, wins: user.wins }
@@ -132,6 +129,7 @@ const Board = ({
             const gameData = { board: boardState, winner: playerWon, msg: message };
             onPlayerLose(gameData);
           }
+          socket.offAny();
         });
 
         // Listen for "draw" event
@@ -149,8 +147,8 @@ const Board = ({
         socket.on("rematchRequestFromOpponent", (name) => {
           const message = `${name} requested a rematch.`
           onOpponentRematchRequest({ message });
+          socket.offAny();
         });
-        socket.offAny();
       }
 
       // Listen for "rematchRequestDeclined" event
@@ -315,15 +313,13 @@ const Board = ({
             </div>
             <>
               {!isGameOver ? (
-                <>
-                  <form onSubmit={onSubmit} className={turn && winner === null ? "user-move hidden" : "user-move" }>
-                    <div>
-                      <label htmlFor="playerMove">Select Cell Number: [1- 9]</label>
-                      <input type="number" name="playerMove" id="playerMove" value={playerMove} onChange={onChageHandler} maxLength={1} min={1} max={9} />
-                    </div>
-                    <button className="btn-submit" type="submit" disabled={playerMove === "" || playerMove < 0 || playerMove > 9}>Confirm</button>
-                  </form> 
-                </>
+                <form onSubmit={onSubmit} className={turn && winner === null ? "user-move" : "user-move hidden" }>
+                  <div>
+                    <label htmlFor="playerMove">Select Cell Number: [1- 9]</label>
+                    <input type="number" name="playerMove" id="playerMove" value={playerMove} onChange={onChageHandler} maxLength={1} min={1} max={9} />
+                  </div>
+                  <button className="btn-submit" type="submit" disabled={playerMove === "" || playerMove < 0 || playerMove > 9}>Confirm</button>
+                </form> 
               ) : (
                 <>
                   {(rematchRequest || requestSent) ? (
