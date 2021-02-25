@@ -18,7 +18,7 @@ const Leaderboard = ({ scores, loading, getScores }) => {
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Username</th>
+              <th>Name</th>
               <th>Wins</th>
             </tr>
           </thead>

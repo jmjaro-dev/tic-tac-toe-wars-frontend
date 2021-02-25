@@ -46,7 +46,8 @@ export default (state = initialState, action) => {
     case SET_ROOM:
       return {
         ...state,
-        room: action.payload
+        room: action.payload,
+        gameLoading: false
       };
     case SET_GAME_START:
       return {
@@ -57,12 +58,14 @@ export default (state = initialState, action) => {
         msg: action.payload.msg,
         waiting: false,
         isStarted: true,
+        gameLoading: false
       };
     case ASSIGN_TOKENS:
       return {
         ...state,
         token: action.payload,
         tokensAssigned: true,
+        gameLoading: false
       };
     case UPDATE_BOARD:
       return {
@@ -71,17 +74,19 @@ export default (state = initialState, action) => {
         turn: action.payload.turn,
         msg: action.payload.msg,
         movesLeft: action.payload.movesLeft,
+        gameLoading: false
       }
     case GET_OPPONENT_SCORE:
       return {
         ...state,
         opponent: { ...state.opponent, wins: action.payload },
-        gameLoading: false
+        gameLoading: false,
       };  
     case ON_JOIN_ERROR:
       return {
         ...state,
-        joinError: !state.joinError
+        joinError: !state.joinError,
+        gameLoading: false
       }
     case ON_WIN:
       return {
@@ -107,24 +112,28 @@ export default (state = initialState, action) => {
         board: action.payload.board,
         movesLeft: action.payload.movesLeft,
         msg: action.payload.msg,
-        isGameOver: true
+        isGameOver: true,
+        gameLoading: false
       }
     case ON_REMATCH_REQUEST:
       return {
         ...state,
         rematchMsg: action.payload,
-        rematchRequest: true
+        rematchRequest: true,
+        gameLoading: false
       }
     case ON_REMATCH_RESPONSE:
       return {
         ...state,
         rematchMsg: action.payload.rematchMsg,
-        rematchResponse: action.payload.rematchResponse
+        rematchResponse: action.payload.rematchResponse,
+        gameLoading: false
       }
     case ON_SEND_REQUEST:
       return {
         ...state,
-        requestSent: true
+        requestSent: true,
+        gameLoading: false
       }
     case ON_SEND_RESPONSE:
       return {
@@ -135,12 +144,28 @@ export default (state = initialState, action) => {
     case GAME_ERROR:
       return {
         ...state,
-        error: action.payload
+        error: action.payload,
+        gameLoading: false
       };
     case SET_WAITING:
       return {
         ...state,
-        waiting: true
+        board: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        turn: true,
+        movesLeft: 9,
+        token: "X",
+        opponent: {},
+        winner: null,
+        joinError: false,
+        isStarted: false,
+        tokensAssigned: false,
+        isGameOver: false,
+        rematchRequest: false,
+        requestSent: false,
+        responseSent: false,
+        rematchResponse: "",
+        waiting: true,
+        gameLoading: false
       };
     case SET_GAME_LOADING:
       return {

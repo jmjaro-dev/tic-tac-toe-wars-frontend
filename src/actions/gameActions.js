@@ -22,6 +22,8 @@ import {
 
 // Set Room
 export const setRoom = (room) => async dispatch => {
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: SET_ROOM,
     payload: room
@@ -30,6 +32,8 @@ export const setRoom = (room) => async dispatch => {
 
 // Set Game Start
 export const setGameStart = (gameData) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: SET_GAME_START,
     payload: gameData
@@ -38,6 +42,8 @@ export const setGameStart = (gameData) => async dispatch => {
 
 // Assign Tokens
 export const assignTokens = (token) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ASSIGN_TOKENS,
     payload: token
@@ -46,6 +52,8 @@ export const assignTokens = (token) => async dispatch => {
 
 // Update Board
 export const updateBoard = (updatedGameData) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+  
   dispatch({
     type: UPDATE_BOARD,
     payload: updatedGameData
@@ -54,9 +62,7 @@ export const updateBoard = (updatedGameData) => async dispatch => {
 
 // Get Opponent's Score
 export const getOpponentsScore = (userId) => async dispatch => {
-  dispatch({
-    type: SET_GAME_LOADING
-  });
+  dispatch({ type: SET_GAME_LOADING });
 
   try {
     const res = await axios.get(`http://localhost:5000/api/scores/${userId}`);
@@ -75,6 +81,8 @@ export const getOpponentsScore = (userId) => async dispatch => {
 
 // On Join Error
 export const onJoinError = () => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_JOIN_ERROR
   });
@@ -82,6 +90,8 @@ export const onJoinError = () => async dispatch => {
 
 // On Rematch Request
 export const onRematchRequest = ({ message }) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_REMATCH_REQUEST,
     payload: message
@@ -90,6 +100,8 @@ export const onRematchRequest = ({ message }) => async dispatch => {
 
 // On Rematch Response
 export const onRematchResponse = (response) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_REMATCH_RESPONSE,
     payload: response
@@ -98,6 +110,8 @@ export const onRematchResponse = (response) => async dispatch => {
 
 // On Send Rematch Request
 export const onSendRequest = () => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_SEND_REQUEST
   });
@@ -105,6 +119,8 @@ export const onSendRequest = () => async dispatch => {
 
 // On Send Rematch Response
 export const onSendResponse = ({ rematchResponse }) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_SEND_RESPONSE,
     payload: rematchResponse
@@ -113,6 +129,8 @@ export const onSendResponse = ({ rematchResponse }) => async dispatch => {
 
 // On Draw
 export const onDraw = (gameData) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+  
   dispatch({
     type: ON_DRAW,
     payload: gameData
@@ -125,14 +143,13 @@ export const onWin = ({ userData, gameData }) => async dispatch => {
     type: SET_GAME_LOADING
   })
 
-  const { id, username, wins } = userData;
-
   const config = {
     headers: {
       'Content-Type': 'application/json'
     }
   }
-
+  
+  const { id, username, wins } = userData;
   const data = { id, username, wins }
 
   try {
@@ -152,6 +169,8 @@ export const onWin = ({ userData, gameData }) => async dispatch => {
 
 // On Lose
 export const onLose = (gameData) => async dispatch => { 
+  dispatch({ type: SET_GAME_LOADING });
+
   dispatch({
     type: ON_LOSE,
     payload: gameData
@@ -160,9 +179,7 @@ export const onLose = (gameData) => async dispatch => {
 
 // Restart Game
 export const restartGame = (newGameData) => async dispatch => {
-  dispatch({
-    type: SET_GAME_LOADING
-  });
+  dispatch({ type: SET_GAME_LOADING });
   
   dispatch({ 
     type: RESTART_GAME,
@@ -174,4 +191,7 @@ export const restartGame = (newGameData) => async dispatch => {
 export const setWaiting = () => async dispatch => dispatch({ type: SET_WAITING });
 
 // Reset Game State
-export const resetGameState = () => async dispatch => dispatch({ type: RESET_GAME_STATE });
+export const resetGameState = () => async dispatch =>{ 
+  dispatch({ type: SET_GAME_LOADING });
+  dispatch({ type: RESET_GAME_STATE })
+};

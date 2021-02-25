@@ -92,7 +92,7 @@ export const setSocket = () => async dispatch => {
   } catch (err) {
     dispatch({
       type: AUTH_ERROR,
-      payload: err.response.data
+      payload: err.response
     });
   }
 };

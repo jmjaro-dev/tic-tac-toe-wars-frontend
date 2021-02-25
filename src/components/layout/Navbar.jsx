@@ -1,10 +1,11 @@
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { logout } from '../../actions/authActions';
 import { resetScoresState } from '../../actions/scoreActions';
 import PropTypes from 'prop-types';
 
-const Navbar = ({ title, isAuthenticated, user, logout, resetScoresState}) => {
+const Navbar = ({ title, isAuthenticated, user, logout, resetScoresState }) => {
+  let loc = useLocation();
 
   const onLogout = () => {
     // Reset all State and Logout
@@ -14,16 +15,20 @@ const Navbar = ({ title, isAuthenticated, user, logout, resetScoresState}) => {
 
   const authLinks = (
     <>
-      <li>
-        <Link to="/" >
-          Play
-        </Link>
-      </li>
-      <li>
-        <Link to="/leaderboard" >
-          Leaderboard
-        </Link>
-      </li>
+      {loc.pathname === "/leaderboard" && (
+        <li>
+          <Link to="/" >
+            Play
+          </Link>
+        </li>
+      )}
+      {loc.pathname === "/" && loc.pathname !== "/leaderboard" && (
+        <li>
+          <Link to="/leaderboard" >
+            Leaderboard
+          </Link>
+        </li>
+      )}
       <li>
         <Link to="/" onClick={onLogout}>
           Logout
